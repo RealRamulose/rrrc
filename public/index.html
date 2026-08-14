@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0a0f">
+<title>RAMULOSE RACE CONTROL</title>
+<style>
+:root {
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--surface3:#22222f;--border:#2a2a3a;
+  --text:#e8e8f0;--text-dim:#8888a0;--accent:#e10600;--green:#00c853;--yellow:#ffd600;
+  --orange:#ff9100;--red:#ff1744;--blue:#2979ff;--purple:#aa00ff;--safe:#00bcd4;
+  --radius:12px;--radius-sm:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --mono:'SF Mono',Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.4;padding-bottom:env(safe-area-inset-bottom,20px)}
+
+#loginScreen{position:fixed;inset:0;z-index:500;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+#loginScreen.hidden{display:none}
+.login-logo{font-weight:800;font-size:22px;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.login-logo span{color:var(--text);font-weight:600}
+.login-sub{color:var(--text-dim);font-size:13px;margin-bottom:32px}
+.login-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+.login-error{background:rgba(255,23,68,.15);border:1px solid var(--red);color:#ff8a80;padding:10px 12px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:14px;display:none}
+.login-error.show{display:block}
+
+.header{position:sticky;top:0;z-index:100;background:linear-gradient(180deg,#0f0f18,#0a0a0f);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.header-logo{font-weight:800;font-size:15px;letter-spacing:1px;color:var(--accent);text-transform:uppercase}
+.header-logo span{color:var(--text);font-weight:600}
+.header-right{display:flex;align-items:center;gap:8px}
+.header-role{font-size:11px;background:var(--surface2);padding:4px 10px;border-radius:20px;color:var(--text-dim);border:1px solid var(--border)}
+.btn-logout{font-size:11px;background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:4px 10px;border-radius:20px;cursor:pointer}
+
+.tabs{display:flex;overflow-x:auto;gap:4px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--border);-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:10px 16px;border-radius:20px;font-size:13px;font-weight:600;background:transparent;color:var(--text-dim);border:1px solid transparent;cursor:pointer;white-space:nowrap}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tab.hidden-tab{display:none!important}
+
+.screen{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:100px}
+.screen.active{display:block}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-dim);margin-bottom:8px;font-weight:600}
+
+.status-banner{text-align:center;padding:20px 16px;border-radius:var(--radius);margin-bottom:16px;position:relative;overflow:hidden}
+.status-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 50%)}
+.status-flag{font-size:42px;margin-bottom:6px}
+.status-label{font-size:22px;font-weight:800;letter-spacing:1px;text-transform:uppercase}
+.status-sub{font-size:13px;opacity:.85;margin-top:4px}
+.status-green{background:linear-gradient(135deg,#003d1a,#005c28);border:1px solid #00c853}
+.status-yellow{background:linear-gradient(135deg,#3d3000,#5c4800);border:1px solid #ffd600;color:#fff}
+.status-double-yellow{background:linear-gradient(135deg,#3d2000,#5c3000);border:1px solid #ff9100}
+.status-safety{background:linear-gradient(135deg,#002a3d,#00405c);border:1px solid #00bcd4}
+.status-red{background:linear-gradient(135deg,#3d000a,#5c0015);border:1px solid #ff1744}
+.status-chequered{background:linear-gradient(135deg,#1a1a1a,#2a2a2a);border:1px solid #888}
+
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.info-item{background:var(--surface2);border-radius:var(--radius-sm);padding:12px;text-align:center;border:1px solid var(--border)}
+.info-item .label{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.8px}
+.info-item .value{font-size:18px;font-weight:700;margin-top:2px}
+.info-item.full{grid-column:1/-1}
+
+.lap-control{display:flex;align-items:center;justify-content:center;gap:16px;margin:12px 0}
+.lap-btn{width:48px;height:48px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);color:var(--text);font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.lap-btn:active{transform:scale(.95)}
+.lap-btn:disabled{opacity:.35;pointer-events:none}
+.lap-display{font-size:28px;font-weight:800;min-width:100px;text-align:center}
+
+.flag-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.flag-btn{padding:18px 12px;border-radius:var(--radius);border:2px solid;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--surface);color:var(--text)}
+.flag-btn .emoji{font-size:28px}
+.flag-btn:active{transform:scale(.97)}
+.flag-btn.active-flag{box-shadow:0 0 0 3px rgba(255,255,255,.2)}
+.flag-btn:disabled{opacity:.35;pointer-events:none}
+.flag-green{border-color:var(--green)}.flag-green.active-flag{background:rgba(0,200,83,.2)}
+.flag-yellow{border-color:var(--yellow)}.flag-yellow.active-flag{background:rgba(255,214,0,.2)}
+.flag-dyellow{border-color:var(--orange)}.flag-dyellow.active-flag{background:rgba(255,145,0,.2)}
+.flag-sc{border-color:var(--safe)}.flag-sc.active-flag{background:rgba(0,188,212,.2)}
+.flag-red{border-color:var(--red)}.flag-red.active-flag{background:rgba(255,23,68,.2)}
+.flag-chequered{border-color:#aaa}.flag-chequered.active-flag{background:rgba(150,150,150,.2)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 20px;border-radius:var(--radius-sm);border:none;font-size:15px;font-weight:600;cursor:pointer;width:100%}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:10px 14px;font-size:13px;width:auto}
+.btn-row{display:flex;gap:10px;margin-top:12px}
+.btn-row .btn{flex:1}
+
+.list-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;cursor:pointer}
+.list-item:active{background:var(--surface3)}
+.list-item-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.list-item-id{font-weight:700;font-size:14px;font-family:var(--mono);color:var(--accent)}
+.list-item-status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:12px;text-transform:uppercase}
+.status-open{background:rgba(255,23,68,.2);color:#ff5252}
+.status-investigation{background:rgba(255,171,0,.2);color:#ffab00}
+.status-reviewing{background:rgba(41,121,255,.2);color:#82b1ff}
+.status-decided{background:rgba(0,200,83,.2);color:#69f0ae}
+.status-cleared{background:rgba(0,188,212,.2);color:#84ffff}
+.status-appealed{background:rgba(170,0,255,.2);color:#e040fb}
+.status-closed{background:rgba(100,100,120,.3);color:#aaa}
+.list-item-meta{font-size:12px;color:var(--text-dim)}
+.list-item-desc{font-size:13px;margin-top:6px}
+
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:16px;font-family:var(--font);-webkit-appearance:none}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent)}
+.form-textarea{min-height:80px;resize:vertical}
+.form-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%8888a0'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px));position:relative;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-dim);font-size:24px;cursor:pointer}
+.confirm-modal .modal{text-align:center}
+.confirm-icon{font-size:48px;margin-bottom:12px}
+.confirm-msg{font-size:15px;color:var(--text-dim);margin-bottom:20px}
+
+.toast-container{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:300;width:90%;max-width:360px;pointer-events:none}
+.toast{background:var(--surface3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px;font-size:14px;font-weight:500;animation:toastIn .3s ease}
+.toast.success{border-color:var(--green)}.toast.error{border-color:var(--red)}.toast.info{border-color:var(--blue)}
+@keyframes toastIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+
+.badge-count{background:var(--accent);color:#fff;min-width:20px;height:20px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;margin-left:6px}
+.empty{text-align:center;padding:40px 20px;color:var(--text-dim)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+
+.settings-section{margin-bottom:24px}
+.settings-section h3{font-size:14px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle{width:50px;height:28px;border-radius:14px;background:var(--surface3);border:1px solid var(--border);position:relative;cursor:pointer}
+.toggle.on{background:var(--green);border-color:var(--green)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle.on::after{transform:translateX(22px)}
+
+.public-header{text-align:center;padding:24px 16px 16px}
+.public-league{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:700}
+.public-round{font-size:28px;font-weight:800;margin:8px 0 4px}
+.public-circuit{font-size:16px;color:var(--text-dim)}
+
+.event-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none}
+.event-time{font-size:11px;color:var(--text-dim);font-family:var(--mono);min-width:55px}
+.event-content{flex:1;font-size:13px}
+.event-id{font-family:var(--mono);color:var(--accent);font-size:12px}
+
+.decision-card{background:var(--surface2);border-left:4px solid var(--purple);padding:14px;border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:10px}
+.user-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);gap:8px}
+.user-row:last-child{border-bottom:none}
+.user-info{flex:1;min-width:0}
+.user-name{font-weight:600;font-size:14px}
+.user-meta{font-size:11px;color:var(--text-dim)}
+.user-role-badge{font-size:10px;padding:3px 8px;border-radius:10px;background:var(--surface3);border:1px solid var(--border);text-transform:uppercase;white-space:nowrap}
+
+.lock-note{background:var(--surface2);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center;color:var(--text-dim);font-size:13px;margin-bottom:12px}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.text-dim{color:var(--text-dim)}.text-sm{font-size:13px}.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mb-8{margin-bottom:8px}.fw-700{font-weight:700}.hidden{display:none!important}
+#app.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-logo">RAMULOSE <span>RACE CONTROL</span></div>
+  <div class="login-sub">League Race Control — Sign in</div>
+  <div class="login-card">
+    <div class="login-error" id="loginError">Invalid username or PIN</div>
+    <div class="form-group">
+      <label class="form-label">Username</label>
+      <input class="form-input" id="loginUser" placeholder="username" autocomplete="username" autocapitalize="off">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PIN</label>
+      <input class="form-input" id="loginPin" type="password" placeholder="••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="btnLogin">Sign In</button>
+    
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="header">
+    <div class="header-logo">RAMULOSE <span>RACE CONTROL</span></div>
+    <div class="header-right">
+      <div class="header-role" id="currentRoleLabel">—</div>
+      <button class="btn-logout" id="btnLogout">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="mainTabs">
+    <div class="tab active" data-screen="dashboard">Dashboard</div>
+    <div class="tab" data-screen="incidents" data-roles="OWNER,ADMIN,RACE_DIRECTOR,DEPUTY_RACE_DIRECTOR,STEWARD,MARSHAL">Incidents <span class="badge-count" id="incidentCount" style="display:none">0</span></div>
+    <div class="tab" data-screen="marshal" data-roles="OWNER,ADMIN,RACE_DIRECTOR,DEPUTY_RACE_DIRECTOR,MARSHAL">Marshal</div>
+    <div class="tab" data-screen="steward" data-roles="OWNER,ADMIN,RACE_DIRECTOR,DEPUTY_RACE_DIRECTOR,STEWARD">Steward</div>
+    <div class="tab" data-screen="history" data-roles="OWNER,ADMIN,RACE_DIRECTOR,DEPUTY_RACE_DIRECTOR,STEWARD">History</div>
+    <div class="tab" data-screen="users" data-roles="OWNER,ADMIN">Users</div>
+    <div class="tab" data-screen="settings" data-roles="OWNER,ADMIN">Settings</div>
+    <div class="tab" data-screen="public">Public</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="screen active" id="screen-dashboard">
+    <div style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:10px">
+      <span class="live-dot"></span> Live shared race state
+      <span id="telemetryBadge" style="margin-left:10px;opacity:0.7">F1 25: —</span>
+    </div>
+    <div class="status-banner status-green" id="statusBanner">
+      <div class="status-flag" id="statusFlag">🟢</div>
+      <div class="status-label" id="statusLabel">GREEN FLAG</div>
+      <div class="status-sub" id="statusSub">Race in progress</div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><div class="label">Season</div><div class="value" id="infoSeason">2026</div></div>
+      <div class="info-item"><div class="label">Round</div><div class="value" id="infoRound">1</div></div>
+      <div class="info-item full"><div class="label">Circuit</div><div class="value" id="infoCircuit">Monza</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Current Lap</div>
+      <div class="lap-control">
+        <button class="lap-btn" id="lapMinus">−</button>
+        <div class="lap-display"><span id="currentLap">1</span> / <span id="totalLaps">27</span></div>
+        <button class="lap-btn" id="lapPlus">+</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Race Control Flags</div>
+      <div class="lock-note hidden" id="flagsLocked">🔒 Only Race Directors can change flags</div>
+      <div class="flag-grid" id="flagGrid">
+        <button class="flag-btn flag-green" data-flag="GREEN"><span class="emoji">🟢</span> Green</button>
+        <button class="flag-btn flag-yellow" data-flag="YELLOW"><span class="emoji">🟡</span> Yellow</button>
+        <button class="flag-btn flag-dyellow" data-flag="DOUBLE_YELLOW"><span class="emoji">🟠</span> Dbl Yellow</button>
+        <button class="flag-btn flag-sc" data-flag="SAFETY_CAR"><span class="emoji">🚗</span> Safety Car</button>
+        <button class="flag-btn flag-red" data-flag="RED"><span class="emoji">🔴</span> Red Flag</button>
+        <button class="flag-btn flag-chequered" data-flag="CHEQUERED"><span class="emoji">🏁</span> Chequered</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Active Incidents</div>
+      <div id="activeIncidentsList"><div class="empty"><div class="empty-icon">✅</div>No active incidents</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recent Race Control</div>
+      <div id="recentEventsList"><div class="empty"><div class="empty-icon">📋</div>No events yet</div></div>
+    </div>
+  </div>
+
+  <!-- INCIDENTS -->
+  <div class="screen" id="screen-incidents">
+    <button class="btn btn-primary" id="btnNewIncident" style="margin-bottom:16px">➕ Create Incident</button>
+    <div id="incidentsList"></div>
+  </div>
+
+  <!-- MARSHAL -->
+  <div class="screen" id="screen-marshal">
+    <div class="card">
+      <div class="card-title">Your Sector</div>
+      <select class="form-select" id="marshalSector">
+        <option value="1">Sector 1</option>
+        <option value="2" selected>Sector 2</option>
+        <option value="3">Sector 3</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-title">Quick Reports</div>
+      <div class="flag-grid">
+        <button class="flag-btn" style="border-color:#ff5252" data-report="STOPPED_CAR"><span class="emoji">🛑</span> Stopped Car</button>
+        <button class="flag-btn" style="border-color:#ffab00" data-report="DEBRIS"><span class="emoji">⚠️</span> Debris</button>
+        <button class="flag-btn" style="border-color:#ff1744" data-report="COLLISION"><span class="emoji">💥</span> Collision</button>
+        <button class="flag-btn" style="border-color:#ff9100" data-report="UNSAFE"><span class="emoji">🚨</span> Unsafe</button>
+        <button class="flag-btn" style="border-color:#ffd600" data-report="YELLOW_SIT"><span class="emoji">🟡</span> Yellow Sit.</button>
+        <button class="flag-btn" style="border-color:#00c853" data-report="SECTOR_CLEAR"><span class="emoji">✅</span> Sector Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEWARD -->
+  <div class="screen" id="screen-steward">
+    <div class="card">
+      <div class="card-title">Incident Queue</div>
+      <div id="stewardQueue"><div class="empty"><div class="empty-icon">⚖️</div>No incidents to review</div></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="screen" id="screen-history">
+    <div class="card"><div class="card-title">Race Control Events</div><div id="historyEvents"></div></div>
+    <div class="card"><div class="card-title">Audit Log</div><div id="auditLog"></div></div>
+  </div>
+
+  <!-- USERS -->
+  <div class="screen" id="screen-users">
+    <div class="card">
+      <div class="card-title">User Registry</div>
+      <p class="text-sm text-dim mb-8">Only people in this list can sign in.</p>
+      <div id="usersList"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Add New User</div>
+      <div class="form-group"><label class="form-label">Username</label><input class="form-input" id="newUserName" autocapitalize="off"></div>
+      <div class="form-group"><label class="form-label">Display Name</label><input class="form-input" id="newUserDisplay"></div>
+      <div class="form-group"><label class="form-label">PIN</label><input class="form-input" id="newUserPin" type="password"></div>
+      <div class="form-group">
+        <label class="form-label">Role</label>
+        <select class="form-select" id="newUserRole">
+          <option value="SPECTATOR">Spectator</option>
+          <option value="DRIVER">Driver</option>
+          <option value="MARSHAL">Marshal</option>
+          <option value="STEWARD">Steward</option>
+          <option value="DEPUTY_RACE_DIRECTOR">Deputy Race Director</option>
+          <option value="RACE_DIRECTOR">Race Director</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="btnAddUser">Add User</button>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="screen" id="screen-settings">
+    <div class="settings-section">
+      <h3>My Account</h3>
+      <div class="form-group">
+        <label class="form-label">Display Name</label>
+        <input class="form-input" id="setMyDisplay" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Current PIN</label>
+        <input class="form-input" id="setMyCurrentPin" type="password" placeholder="Required to change PIN">
+      </div>
+      <div class="form-group">
+        <label class="form-label">New PIN</label>
+        <input class="form-input" id="setMyNewPin" type="password" placeholder="Leave blank to keep current">
+      </div>
+      <button class="btn btn-primary" id="btnSaveProfile">Save My Account</button>
+    </div>
+    <div class="settings-section">
+      <h3>Race Setup</h3>
+      <div class="form-group"><label class="form-label">League Name</label><input class="form-input" id="setLeagueName"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Season</label><input class="form-input" id="setSeason"></div>
+        <div class="form-group"><label class="form-label">Round</label><input class="form-input" id="setRound" type="number"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Circuit</label><input class="form-input" id="setCircuit"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Total Laps</label><input class="form-input" id="setTotalLaps" type="number"></div>
+        <div class="form-group"><label class="form-label">Current Lap</label><input class="form-input" id="setCurrentLap" type="number"></div>
+      </div>
+      <button class="btn btn-primary" id="btnSaveRaceSetup">Save Race Setup</button>
+    </div>
+    <div class="settings-section">
+      <h3>Discord Webhook</h3>
+      <div class="form-group"><label class="form-label">Webhook URL (stored on server only)</label><input class="form-input" id="setWebhookUrl" type="password" placeholder="https://discord.com/api/webhooks/..."></div>
+      <div class="form-group"><label class="form-label">Channel Name</label><input class="form-input" id="setWebhookName"></div>
+      <div class="toggle-row"><span>Announcements Enabled</span><div class="toggle on" id="toggleAnnouncements"></div></div>
+      <p class="text-sm text-dim mt-8 mb-8">Categories:</p>
+      <div class="toggle-row"><span>Race Control</span><div class="toggle on" data-cat="RACE_CONTROL"></div></div>
+      <div class="toggle-row"><span>Incidents</span><div class="toggle on" data-cat="INCIDENTS"></div></div>
+      <div class="toggle-row"><span>Steward Decisions</span><div class="toggle on" data-cat="STEWARD_DECISIONS"></div></div>
+      <div class="toggle-row"><span>Marshal Reports</span><div class="toggle" data-cat="MARSHAL_REPORTS"></div></div>
+      <div class="toggle-row"><span>System Alerts</span><div class="toggle on" data-cat="SYSTEM_ALERTS"></div></div>
+      <div class="btn-row mt-12">
+        <button class="btn btn-secondary" id="btnSaveDiscord">Save</button>
+        <button class="btn btn-primary" id="btnTestDiscord">Test Webhook</button>
+      </div>
+      <div id="discordTestResult" class="mt-12 text-center text-sm"></div>
+      <p class="text-sm text-dim mt-8" id="discordStatus"></p>
+    </div>
+  </div>
+
+  <!-- PUBLIC -->
+  <div class="screen" id="screen-public">
+    <div class="public-header">
+      <div class="public-league" id="pubLeague">RAMULOSE F1 LEAGUE</div>
+      <div class="public-round">ROUND <span id="pubRound">01</span></div>
+      <div class="public-circuit" id="pubCircuit">MONZA</div>
+    </div>
+    <div class="status-banner status-green" id="pubStatusBanner">
+      <div class="status-flag" id="pubStatusFlag">🟢</div>
+      <div class="status-label" id="pubStatusLabel">GREEN FLAG</div>
+      <div class="status-sub">LAP <span id="pubLap">1</span> / <span id="pubTotal">27</span></div>
+    </div>
+    <div class="card"><div class="card-title">Active Incidents</div><div id="pubIncidents"></div></div>
+    <div class="card"><div class="card-title">Recent Race Control</div><div id="pubEvents"></div></div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay confirm-modal" id="confirmModal">
+  <div class="modal">
+    <div class="confirm-icon" id="confirmIcon">🔴</div>
+    <div class="modal-title" id="confirmTitle">RED FLAG</div>
+    <div class="confirm-msg" id="confirmMsg">Are you sure?</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger" id="confirmOk">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="incidentModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('incidentModal')">×</button>
+    <div class="modal-title">Create Incident</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Lap</label><input class="form-input" id="incLap" type="number"></div>
+      <div class="form-group"><label class="form-label">Sector</label><select class="form-select" id="incSector"><option>1</option><option>2</option><option>3</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Corner</label><input class="form-input" id="incCorner" placeholder="e.g. T8"></div>
+    <div class="form-group"><label class="form-label">Drivers</label><input class="form-input" id="incDrivers" placeholder="e.g. 27, 44"></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select class="form-select" id="incType">
+        <option>Collision</option><option>Track Limits</option><option>Unsafe Rejoin</option>
+        <option>Blocking</option><option>Speeding in Pit</option><option>Jump Start</option>
+        <option>Stopped Car</option><option>Debris</option><option>Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="incDesc"></textarea></div>
+    <button class="btn btn-primary" id="btnSubmitIncident">Create Incident</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="marshalModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('marshalModal')">×</button>
+    <div class="modal-title" id="marshalModalTitle">Report</div>
+    <div class="form-group"><label class="form-label">Corner</label><input class="form-input" id="marCorner"></div>
+    <div class="form-group"><label class="form-label">Car Number(s)</label><input class="form-input" id="marCars"></div>
+    <div class="form-group"><label class="form-label">Details</label><textarea class="form-textarea" id="marDetails"></textarea></div>
+    <button class="btn btn-primary" id="btnSubmitMarshal">Submit Report</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const FLAG_META = {
+  GREEN:{emoji:'🟢',label:'GREEN FLAG',sub:'Race in progress',cls:'status-green'},
+  YELLOW:{emoji:'🟡',label:'YELLOW FLAG',sub:'Caution — no overtaking',cls:'status-yellow'},
+  DOUBLE_YELLOW:{emoji:'🟠',label:'DOUBLE YELLOW',sub:'Danger — be prepared to stop',cls:'status-double-yellow'},
+  SAFETY_CAR:{emoji:'🚗',label:'SAFETY CAR',sub:'Safety Car deployed',cls:'status-safety'},
+  RED:{emoji:'🔴',label:'RED FLAG',sub:'Race suspended',cls:'status-red'},
+  CHEQUERED:{emoji:'🏁',label:'CHEQUERED FLAG',sub:'Race finished',cls:'status-chequered'}
+};
+const CRITICAL = ['RED','SAFETY_CAR','CHEQUERED'];
+const FLAG_ROLES = ['OWNER','ADMIN','RACE_DIRECTOR','DEPUTY_RACE_DIRECTOR'];
+const STEWARD_ROLES = ['OWNER','ADMIN','RACE_DIRECTOR','DEPUTY_RACE_DIRECTOR','STEWARD'];
+const STATUS_CLASS = {
+  'OPEN':'status-open','UNDER INVESTIGATION':'status-investigation','REVIEWING':'status-reviewing',
+  'DECIDED':'status-decided','CLEARED':'status-cleared','APPEALED':'status-appealed','CLOSED':'status-closed'
+};
+
+let user = null;
+let race = null;
+let events = [];
+let incidents = [];
+let penalties = [];
+let pendingFlag = null;
+let pendingMarshalType = null;
+let pollTimer = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+    ...opts
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function hasRole(...roles) { return user && roles.includes(user.role); }
+
+// ---------- Auth ----------
+async function tryLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const pin = document.getElementById('loginPin').value;
+  const err = document.getElementById('loginError');
+  err.classList.remove('show');
+  try {
+    const data = await api('/api/login', { method: 'POST', body: JSON.stringify({ username, pin }) });
+    user = data.user;
+    showApp();
+    toast(`Welcome, ${user.display}`, 'success');
+  } catch (e) {
+    err.classList.add('show');
+  }
+}
+
+async function logout() {
+  try { await api('/api/logout', { method: 'POST' }); } catch {}
+  user = null;
+  if (pollTimer) clearInterval(pollTimer);
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+async function checkSession() {
+  try {
+    const data = await api('/api/me');
+    user = data.user;
+    showApp();
+  } catch {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+  }
+}
+
+function showApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  applyPermissions();
+  refresh();
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(refresh, 4000); // live poll every 4s
+}
+
+function applyPermissions() {
+  const role = user?.role || 'SPECTATOR';
+  document.querySelectorAll('.tab[data-roles]').forEach(tab => {
+    const allowed = tab.dataset.roles.split(',');
+    tab.classList.toggle('hidden-tab', !allowed.includes(role));
+  });
+  const canFlags = FLAG_ROLES.includes(role);
+  document.getElementById('flagsLocked').classList.toggle('hidden', canFlags);
+  document.querySelectorAll('#flagGrid .flag-btn').forEach(b => { b.disabled = !canFlags; });
+  document.getElementById('lapMinus').disabled = !canFlags;
+  document.getElementById('lapPlus').disabled = !canFlags;
+  document.getElementById('currentRoleLabel').textContent = `${user.display} · ${role.replace(/_/g, ' ')}`;
+  const canInc = ['OWNER','ADMIN','RACE_DIRECTOR','DEPUTY_RACE_DIRECTOR','STEWARD','MARSHAL'].includes(role);
+  document.getElementById('btnNewIncident').style.display = canInc ? '' : 'none';
+}
+
+// ---------- Data ----------
+async function refresh() {
+  try {
+    const data = await api('/api/race');
+    race = data.race;
+    events = data.events || [];
+    incidents = data.incidents || [];
+    renderAll();
+    try {
+      const t = await api('/api/telemetry');
+      const badge = document.getElementById('telemetryBadge');
+      if (badge) {
+        if (t.connected) {
+          badge.textContent = `F1 25: LIVE${t.trackName ? ' · ' + t.trackName : ''}${t.sessionType ? ' · ' + t.sessionType : ''}`;
+          badge.style.color = 'var(--green)';
+        } else {
+          badge.textContent = 'F1 25: not connected';
+          badge.style.color = 'var(--text-dim)';
+        }
+      }
+    } catch {}
+  } catch (e) {
+    if (e.message.includes('Not logged in')) logout();
+  }
+}
+
+// ---------- Actions ----------
+async function setFlag(flag, confirmed = false) {
+  if (!hasRole(...FLAG_ROLES)) return toast('Only Race Directors can change flags', 'error');
+  if (CRITICAL.includes(flag) && !confirmed) {
+    pendingFlag = flag;
+    const m = FLAG_META[flag];
+    document.getElementById('confirmIcon').textContent = m.emoji;
+    document.getElementById('confirmTitle').textContent = m.label;
+    document.getElementById('confirmMsg').textContent =
+      flag === 'RED' ? 'Are you sure you want to suspend the race?' :
+      flag === 'SAFETY_CAR' ? 'Deploy the Safety Car?' : 'End the race?';
+    document.getElementById('confirmOk').className = 'btn ' + (flag === 'RED' ? 'btn-danger' : 'btn-primary');
+    document.getElementById('confirmOk').textContent = 'Confirm ' + m.label;
+    openModal('confirmModal');
+    return;
+  }
+  try {
+    const data = await api('/api/flag', { method: 'POST', body: JSON.stringify({ flag }) });
+    toast(`${FLAG_META[flag].emoji} ${FLAG_META[flag].label} — ${data.event_id}`, 'success');
+    if (data.discord?.demo) toast('Discord: demo mode (no webhook set)', 'info');
+    else if (data.discord?.ok) toast('Discord announced', 'success');
+    await refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function createIncident(payload) {
+  try {
+    const data = await api('/api/incidents', { method: 'POST', body: JSON.stringify(payload) });
+    toast(`${data.incident_id} created`, 'success');
+    await refresh();
+    return data.incident_id;
+  } catch (e) { toast(e.message, 'error'); return null; }
+}
+
+async function saveIncidentDetail(id) {
+  const note = document.getElementById('detailNote')?.value?.trim();
+  const status = document.getElementById('detailStatus')?.value;
+  const finding = document.getElementById('detailFinding')?.value?.trim();
+  const penalty = document.getElementById('detailPenalty')?.value;
+  const body = { status };
+  if (note) body.steward_notes = note;
+  if (finding) body.finding = finding;
+  if (penalty) body.penalty = penalty;
+  if (finding || penalty) body.publish_decision = true;
+  try {
+    const data = await api(`/api/incidents/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
+    toast(data.decision_id ? `Decision ${data.decision_id} published` : 'Incident updated', 'success');
+    closeModal('detailModal');
+    await refresh();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ---------- Render ----------
+function renderAll() {
+  if (!race) return;
+  const m = FLAG_META[race.status] || FLAG_META.GREEN;
+  const banner = document.getElementById('statusBanner');
+  banner.className = `status-banner ${m.cls}`;
+  document.getElementById('statusFlag').textContent = m.emoji;
+  document.getElementById('statusLabel').textContent = m.label;
+  document.getElementById('statusSub').textContent = m.sub;
+  document.querySelectorAll('.flag-btn[data-flag]').forEach(b => {
+    b.classList.toggle('active-flag', b.dataset.flag === race.status);
+  });
+
+  document.getElementById('infoSeason').textContent = race.season;
+  document.getElementById('infoRound').textContent = race.round;
+  document.getElementById('infoCircuit').textContent = race.circuit;
+  document.getElementById('currentLap').textContent = race.current_lap;
+  document.getElementById('totalLaps').textContent = race.total_laps;
+
+  // Public
+  document.getElementById('pubLeague').textContent = (race.league_name || '').toUpperCase();
+  document.getElementById('pubRound').textContent = String(race.round).padStart(2, '0');
+  document.getElementById('pubCircuit').textContent = (race.circuit || '').toUpperCase();
+  const pb = document.getElementById('pubStatusBanner');
+  pb.className = `status-banner ${m.cls}`;
+  document.getElementById('pubStatusFlag').textContent = m.emoji;
+  document.getElementById('pubStatusLabel').textContent = m.label;
+  document.getElementById('pubLap').textContent = race.current_lap;
+  document.getElementById('pubTotal').textContent = race.total_laps;
+
+  // Settings fields
+  if (user) document.getElementById('setMyDisplay').value = user.display || '';
+  document.getElementById('setLeagueName').value = race.league_name || '';
+  document.getElementById('setSeason').value = race.season || '';
+  document.getElementById('setRound').value = race.round || 1;
+  document.getElementById('setCircuit').value = race.circuit || '';
+  document.getElementById('setTotalLaps').value = race.total_laps || 27;
+  document.getElementById('setCurrentLap').value = race.current_lap || 1;
+
+  const active = incidents.filter(i => !['CLEARED','CLOSED','DECIDED'].includes(i.status));
+  const countEl = document.getElementById('incidentCount');
+  if (active.length) { countEl.style.display = 'inline-flex'; countEl.textContent = active.length; }
+  else countEl.style.display = 'none';
+
+  document.getElementById('activeIncidentsList').innerHTML = active.length ? active.slice(0,5).map(i => `
+    <div class="list-item" onclick="showIncident('${i.incident_id}')">
+      <div class="list-item-header">
+        <span class="list-item-id">${i.incident_id}</span>
+        <span class="list-item-status ${STATUS_CLASS[i.status]||''}">${i.status}</span>
+      </div>
+      <div class="list-item-meta">Lap ${i.lap} · ${i.drivers||'—'} · ${i.type}</div>
+    </div>`).join('') : '<div class="empty"><div class="empty-icon">✅</div>No active incidents</div>';
+
+  document.getElementById('pubIncidents').innerHTML = active.length ? active.map(i => `
+    <div class="list-item"><div class="list-item-header">
+      <span class="list-item-id">${i.incident_id}</span>
+      <span class="list-item-status ${STATUS_CLASS[i.status]||''}">${i.status}</span>
+    </div><div class="list-item-meta">Lap ${i.lap} · ${i.type}</div></div>`).join('') :
+    '<div class="empty"><div class="empty-icon">✅</div>No active incidents</div>';
+
+  document.getElementById('recentEventsList').innerHTML = events.length ? events.slice(0,6).map(e => `
+    <div class="event-item">
+      <div class="event-time">${(e.created_at||'').split(' ')[1]||''}</div>
+      <div class="event-content">
+        <div>${FLAG_META[e.flag]?.emoji||''} ${FLAG_META[e.flag]?.label||e.flag}</div>
+        <div class="event-id">${e.event_id} · Lap ${e.lap}</div>
+      </div>
+    </div>`).join('') : '<div class="empty"><div class="empty-icon">📋</div>No events yet</div>';
+
+  document.getElementById('pubEvents').innerHTML = events.slice(0,5).map(e => `
+    <div class="event-item">
+      <div class="event-time">${(e.created_at||'').split(' ')[1]||''}</div>
+      <div class="event-content">${FLAG_META[e.flag]?.emoji||''} ${e.event_id} — ${FLAG_META[e.flag]?.label||e.flag}</div>
+    </div>`).join('') || '<div class="empty text-sm">No events</div>';
+
+  document.getElementById('incidentsList').innerHTML = incidents.length ? incidents.map(i => `
+    <div class="list-item" onclick="showIncident('${i.incident_id}')">
+      <div class="list-item-header">
+        <span class="list-item-id">${i.incident_id}</span>
+        <span class="list-item-status ${STATUS_CLASS[i.status]||''}">${i.status}</span>
+      </div>
+      <div class="list-item-meta">Lap ${i.lap} · Sector ${i.sector||'—'} · ${i.drivers||'—'}</div>
+      <div class="list-item-desc">${i.type}${i.description ? ' — '+i.description.substring(0,50) : ''}</div>
+    </div>`).join('') : '<div class="empty"><div class="empty-icon">📋</div>No incidents</div>';
+
+  const queue = incidents.filter(i => ['OPEN','UNDER INVESTIGATION','REVIEWING','APPEALED'].includes(i.status));
+  document.getElementById('stewardQueue').innerHTML = queue.length ? queue.map(i => `
+    <div class="list-item" onclick="showIncident('${i.incident_id}')">
+      <div class="list-item-header">
+        <span class="list-item-id">${i.incident_id}</span>
+        <span class="list-item-status ${STATUS_CLASS[i.status]||''}">${i.status}</span>
+      </div>
+      <div class="list-item-meta">Lap ${i.lap} · ${i.drivers||'—'} · ${i.type}</div>
+    </div>`).join('') : '<div class="empty"><div class="empty-icon">⚖️</div>No incidents to review</div>';
+
+  document.getElementById('historyEvents').innerHTML = events.length ? events.map(e => `
+    <div class="event-item">
+      <div class="event-time">${e.created_at||''}</div>
+      <div class="event-content">${FLAG_META[e.flag]?.emoji||''} <strong>${e.event_id}</strong> — ${FLAG_META[e.flag]?.label||e.flag}<br>
+      <span class="text-dim text-sm">Lap ${e.lap}</span></div>
+    </div>`).join('') : '<div class="empty text-sm">No events</div>';
+}
+
+window.showIncident = async function(id) {
+  try {
+    const data = await api(`/api/incidents/${id}`);
+    const inc = data.incident;
+    const history = data.history || [];
+    const canAct = hasRole(...STEWARD_ROLES);
+    if (!penalties.length) {
+      try { const p = await api('/api/penalties'); penalties = p.penalties; } catch {}
+    }
+
+    let html = `
+      <div class="modal-title">${inc.incident_id}</div>
+      <div class="list-item-status ${STATUS_CLASS[inc.status]||''}" style="display:inline-block;margin-bottom:12px">${inc.status}</div>
+      <div class="text-sm text-dim mb-8">${inc.created_at||''}</div>
+      <div class="info-grid" style="margin-bottom:12px">
+        <div class="info-item"><div class="label">Lap</div><div class="value" style="font-size:16px">${inc.lap||'—'}</div></div>
+        <div class="info-item"><div class="label">Sector</div><div class="value" style="font-size:16px">${inc.sector||'—'}</div></div>
+        <div class="info-item"><div class="label">Corner</div><div class="value" style="font-size:16px">${inc.corner||'—'}</div></div>
+        <div class="info-item"><div class="label">Drivers</div><div class="value" style="font-size:16px">${inc.drivers||'—'}</div></div>
+      </div>
+      <div class="form-group"><div class="form-label">Type</div><div>${inc.type||'—'}</div></div>
+      <div class="form-group"><div class="form-label">Description</div><div class="text-sm">${inc.description||'—'}</div></div>
+      <div class="form-group"><div class="form-label">Reported by</div><div>${inc.marshal_name||'—'}</div></div>
+    `;
+    if (inc.finding || inc.decision_id) {
+      html += `<div class="decision-card">
+        <div class="fw-700">Decision ${inc.decision_id||''}</div>
+        <div class="text-sm mt-8">${inc.finding||''}</div>
+        <div class="text-sm mt-8"><strong>Penalty:</strong> ${inc.penalty||'None'}</div>
+      </div>`;
+    }
+    if (canAct && !['CLOSED','CLEARED'].includes(inc.status)) {
+      html += `
+        <div class="form-group mt-12"><label class="form-label">Note</label><textarea class="form-textarea" id="detailNote">${inc.steward_notes||''}</textarea></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="detailStatus">
+            <option>OPEN</option><option>UNDER INVESTIGATION</option><option>REVIEWING</option>
+            <option>DECIDED</option><option>CLEARED</option><option>APPEALED</option><option>CLOSED</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Finding</label><textarea class="form-textarea" id="detailFinding" placeholder="e.g. Car #27 primarily responsible">${inc.finding||''}</textarea></div>
+        <div class="form-group"><label class="form-label">Penalty</label>
+          <select class="form-select" id="detailPenalty"><option value="">None</option>
+            ${penalties.map(p => `<option ${inc.penalty===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="saveIncidentDetail('${inc.incident_id}')">Save & Publish Decision</button>
+      `;
+    }
+    html += `<div class="form-group mt-12"><div class="form-label">History</div>
+      ${history.map(h => `<div class="text-sm text-dim">${h.created_at} — ${h.action} (${h.by_user||''})</div>`).join('')||'—'}
+    </div>`;
+    document.getElementById('detailContent').innerHTML = html;
+    if (document.getElementById('detailStatus')) document.getElementById('detailStatus').value = inc.status;
+    openModal('detailModal');
+  } catch (e) { toast(e.message, 'error'); }
+};
+
+window.saveIncidentDetail = saveIncidentDetail;
+
+async function loadUsers() {
+  if (!hasRole('OWNER','ADMIN')) return;
+  try {
+    const data = await api('/api/users');
+    document.getElementById('usersList').innerHTML = data.users.map(u => `
+      <div class="user-row">
+        <div class="user-info">
+          <div class="user-name">${u.display_name}</div>
+          <div class="user-meta">@${u.username}</div>
+        </div>
+        <span class="user-role-badge">${u.role.replace(/_/g,' ')}</span>
+        ${u.username !== 'ramulose' ? `<button class="btn btn-sm btn-secondary" onclick="deleteUser('${u.username}')" style="width:auto;padding:6px 10px">✕</button>` : ''}
+      </div>`).join('');
+  } catch {}
+}
+
+window.deleteUser = async function(username) {
+  if (!confirm(`Delete ${username}?`)) return;
+  try {
+    await api(`/api/users/${username}`, { method: 'DELETE' });
+    toast('User deleted', 'success');
+    loadUsers();
+  } catch (e) { toast(e.message, 'error'); }
+};
+
+async function loadDiscord() {
+  if (!hasRole('OWNER','ADMIN')) return;
+  try {
+    const d = await api('/api/discord');
+    document.getElementById('toggleAnnouncements').classList.toggle('on', d.enabled);
+    document.getElementById('setWebhookName').value = d.channel_name || '';
+    document.getElementById('discordStatus').textContent = d.has_webhook ? '✓ Webhook configured on server' : 'No webhook set yet';
+    document.querySelectorAll('.toggle[data-cat]').forEach(t => {
+      t.classList.toggle('on', !!d.categories[t.dataset.cat]);
+    });
+  } catch {}
+}
+
+async function loadAudit() {
+  if (!hasRole(...STEWARD_ROLES, 'ADMIN', 'OWNER')) return;
+  try {
+    const data = await api('/api/audit');
+    document.getElementById('auditLog').innerHTML = data.logs.length ? data.logs.map(a => `
+      <div class="event-item">
+        <div class="event-time">${(a.created_at||'').split(' ')[1]||''}</div>
+        <div class="event-content text-sm">${a.by_user||''}: ${a.action}</div>
+      </div>`).join('') : '<div class="empty text-sm">No audit entries</div>';
+  } catch {}
+}
+
+// ---------- Events ----------
+document.getElementById('btnLogin').addEventListener('click', tryLogin);
+document.getElementById('loginPin').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+document.getElementById('btnLogout').addEventListener('click', logout);
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (tab.classList.contains('hidden-tab')) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('screen-' + tab.dataset.screen).classList.add('active');
+    if (tab.dataset.screen === 'users') loadUsers();
+    if (tab.dataset.screen === 'settings') loadDiscord();
+    if (tab.dataset.screen === 'history') loadAudit();
+  });
+});
+
+document.querySelectorAll('.flag-btn[data-flag]').forEach(btn => {
+  btn.addEventListener('click', () => setFlag(btn.dataset.flag));
+});
+document.getElementById('confirmCancel').addEventListener('click', () => { pendingFlag = null; closeModal('confirmModal'); });
+document.getElementById('confirmOk').addEventListener('click', () => {
+  if (pendingFlag) { setFlag(pendingFlag, true); pendingFlag = null; }
+  closeModal('confirmModal');
+});
+
+document.getElementById('lapMinus').addEventListener('click', async () => {
+  if (!hasRole(...FLAG_ROLES)) return;
+  await api('/api/race/lap', { method: 'POST', body: JSON.stringify({ delta: -1 }) });
+  refresh();
+});
+document.getElementById('lapPlus').addEventListener('click', async () => {
+  if (!hasRole(...FLAG_ROLES)) return;
+  await api('/api/race/lap', { method: 'POST', body: JSON.stringify({ delta: 1 }) });
+  refresh();
+});
+
+document.getElementById('btnNewIncident').addEventListener('click', () => {
+  document.getElementById('incLap').value = race?.current_lap || 1;
+  openModal('incidentModal');
+});
+document.getElementById('btnSubmitIncident').addEventListener('click', async () => {
+  await createIncident({
+    lap: parseInt(document.getElementById('incLap').value) || race?.current_lap,
+    sector: document.getElementById('incSector').value,
+    corner: document.getElementById('incCorner').value,
+    drivers: document.getElementById('incDrivers').value,
+    type: document.getElementById('incType').value,
+    description: document.getElementById('incDesc').value
+  });
+  closeModal('incidentModal');
+  document.getElementById('incCorner').value = '';
+  document.getElementById('incDrivers').value = '';
+  document.getElementById('incDesc').value = '';
+});
+
+document.querySelectorAll('[data-report]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    pendingMarshalType = btn.dataset.report;
+    if (pendingMarshalType === 'SECTOR_CLEAR') {
+      toast('Sector marked clear', 'success');
+      return;
+    }
+    document.getElementById('marshalModalTitle').textContent = btn.textContent.trim();
+    openModal('marshalModal');
+  });
+});
+document.getElementById('btnSubmitMarshal').addEventListener('click', async () => {
+  const typeMap = {
+    STOPPED_CAR: 'Stopped Car', DEBRIS: 'Debris', COLLISION: 'Collision',
+    UNSAFE: 'Unsafe situation', YELLOW_SIT: 'Yellow flag situation'
+  };
+  await createIncident({
+    lap: race?.current_lap,
+    sector: document.getElementById('marshalSector').value,
+    corner: document.getElementById('marCorner').value,
+    drivers: document.getElementById('marCars').value,
+    type: typeMap[pendingMarshalType] || 'Report',
+    description: document.getElementById('marDetails').value || typeMap[pendingMarshalType]
+  });
+  closeModal('marshalModal');
+  document.getElementById('marCorner').value = '';
+  document.getElementById('marCars').value = '';
+  document.getElementById('marDetails').value = '';
+});
+
+document.getElementById('btnAddUser').addEventListener('click', async () => {
+  try {
+    await api('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: document.getElementById('newUserName').value.trim(),
+        display_name: document.getElementById('newUserDisplay').value.trim(),
+        pin: document.getElementById('newUserPin').value,
+        role: document.getElementById('newUserRole').value
+      })
+    });
+    toast('User added', 'success');
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserDisplay').value = '';
+    document.getElementById('newUserPin').value = '';
+    loadUsers();
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('btnSaveProfile').addEventListener('click', async () => {
+  const display_name = document.getElementById('setMyDisplay').value.trim();
+  const current_pin = document.getElementById('setMyCurrentPin').value;
+  const new_pin = document.getElementById('setMyNewPin').value;
+  const body = {};
+  if (display_name) body.display_name = display_name;
+  if (new_pin) {
+    body.current_pin = current_pin;
+    body.new_pin = new_pin;
+  }
+  if (!body.display_name && !body.new_pin) {
+    toast('Nothing to update', 'info');
+    return;
+  }
+  try {
+    const data = await api('/api/me/profile', { method: 'POST', body: JSON.stringify(body) });
+    user = data.user;
+    applyPermissions();
+    document.getElementById('setMyCurrentPin').value = '';
+    document.getElementById('setMyNewPin').value = '';
+    toast('Account updated', 'success');
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('btnSaveRaceSetup').addEventListener('click', async () => {
+  try {
+    await api('/api/race/setup', {
+      method: 'POST',
+      body: JSON.stringify({
+        league_name: document.getElementById('setLeagueName').value,
+        season: document.getElementById('setSeason').value,
+        round: parseInt(document.getElementById('setRound').value),
+        circuit: document.getElementById('setCircuit').value,
+        total_laps: parseInt(document.getElementById('setTotalLaps').value),
+        current_lap: parseInt(document.getElementById('setCurrentLap').value)
+      })
+    });
+    toast('Race setup saved', 'success');
+    refresh();
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('toggleAnnouncements').addEventListener('click', function() {
+  this.classList.toggle('on');
+});
+document.querySelectorAll('.toggle[data-cat]').forEach(t => {
+  t.addEventListener('click', function() { this.classList.toggle('on'); });
+});
+
+document.getElementById('btnSaveDiscord').addEventListener('click', async () => {
+  const categories = {};
+  document.querySelectorAll('.toggle[data-cat]').forEach(t => {
+    categories[t.dataset.cat] = t.classList.contains('on');
+  });
+  const body = {
+    enabled: document.getElementById('toggleAnnouncements').classList.contains('on'),
+    channel_name: document.getElementById('setWebhookName').value,
+    categories
+  };
+  const url = document.getElementById('setWebhookUrl').value.trim();
+  if (url) body.webhook_url = url;
+  try {
+    await api('/api/discord', { method: 'POST', body: JSON.stringify(body) });
+    toast('Discord settings saved', 'success');
+    document.getElementById('setWebhookUrl').value = '';
+    loadDiscord();
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+document.getElementById('btnTestDiscord').addEventListener('click', async () => {
+  const el = document.getElementById('discordTestResult');
+  el.textContent = 'Sending...';
+  try {
+    const r = await api('/api/discord/test', { method: 'POST' });
+    if (r.ok && r.real) { el.innerHTML = '✅ Discord webhook test successful'; el.style.color = 'var(--green)'; }
+    else if (r.demo) { el.innerHTML = '⚠️ No webhook configured yet'; el.style.color = 'var(--yellow)'; }
+    else { el.innerHTML = '❌ Failed: ' + (r.reason || ''); el.style.color = 'var(--red)'; }
+  } catch (e) { el.innerHTML = '❌ ' + e.message; el.style.color = 'var(--red)'; }
+});
+
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('show'); });
+});
+
+checkSession();
+</script>
+</body>
+</html>
