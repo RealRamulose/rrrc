@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: ramulose-rc
+    runtime: node
+    plan: free
+    buildCommand: npm install && node init-db.js
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
